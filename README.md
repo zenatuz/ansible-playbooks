@@ -1,3 +1,3 @@
 # Playbooks para Ansible
 
-Repositório com playbooks úteis
+Useful Ansible playbooks

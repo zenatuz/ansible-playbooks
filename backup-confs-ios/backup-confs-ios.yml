@@ -1,0 +1,46 @@
+---
+    - hosts: IOS
+      gather_facts: true
+      connection: local
+    
+      vars:
+        backup_root: /backup/
+    
+      tasks:
+        - name: Get Credentials
+          include_vars: creds.yml
+    
+        - name: Define Connection
+          set_fact:
+            connection: 
+              host: "{{ inventory_hostname }}"
+              username: "{{ creds['username'] }}"
+              password: "{{ creds['password'] }}"
+              auth_pass: "{{ creds['auth_pass'] }}"
+    
+        - name: Ensure backup folder is created
+          file:
+            path: "{{ backup_root }}"
+            state: directory
+          run_once: yes
+    
+        - name: Ensure device folder is created
+          file:
+            path: "{{ backup_root }}/{{ inventory_hostname }}"
+            state: directory
+    
+        - name: Get timestamp
+          command: date +%Y%m%d
+          register: timestamp
+    
+        - name: Run "show running-config" on remote devices
+          ios_command:
+            commands: 
+              - show running
+            provider: "{{ connection }}"
+            timeout: 30
+          register: config
+    
+        - copy:
+            content: "{{ config.stdout[0] }}"
+            dest: "{{ backup_root }}/{{ inventory_hostname }}/running-config_{{ timestamp.stdout }}"
